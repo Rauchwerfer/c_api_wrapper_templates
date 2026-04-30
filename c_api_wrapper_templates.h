@@ -6,12 +6,16 @@
 #else
     #define C_WRAPPER_CPP_VERSION __cplusplus
 #endif
-
 // #if C_WRAPPER_CPP_VERSION >= 201703L
 //     #define C_WRAPPER_NODISCARD [[nodiscard]]
 // #else
 //     #define C_WRAPPER_NODISCARD
 // #endif
+
+
+
+#ifdef __cplusplus
+
 #if defined(__has_cpp_attribute)
 #  if __has_cpp_attribute(nodiscard) >= 201603
 #    define C_WRAPPER_NODISCARD [[nodiscard]]
@@ -23,8 +27,8 @@
 #endif
 
 
-#ifdef __cplusplus
-extern "C++" {
+
+//extern "C++" {
 
 template<typename InstanceT>
 class c_api_wrapper_view_class
@@ -44,17 +48,17 @@ public:
 };
 
 template<
-    //typename ViewT,
+    typename ViewT,
     typename InstanceT,
     void (*DestroyFn)(InstanceT*)
 >
-class c_api_wrapper_handle_class : public c_api_wrapper_view_class<InstanceT>//ViewT
+class c_api_wrapper_handle_class : public ViewT
 {
 public:
     c_api_wrapper_handle_class() = default;
 
     explicit c_api_wrapper_handle_class(InstanceT* instance)
-        : c_api_wrapper_view_class<InstanceT>(instance)
+        : ViewT(instance)
     {
     }
 
@@ -67,7 +71,7 @@ public:
     c_api_wrapper_handle_class& operator=(const c_api_wrapper_handle_class&) = delete;
 
     c_api_wrapper_handle_class(c_api_wrapper_handle_class&& other) noexcept
-        : c_api_wrapper_view_class<InstanceT>(other.m_instance)
+        : ViewT(other.m_instance)
     {
         other.m_instance = nullptr;
     }
@@ -101,14 +105,14 @@ public:
 };
 
 template<
-    //typename ViewT,
+    typename ViewT,
     typename InstanceT,
     InstanceT* (*CreateFn)(),
     void (*DestroyFn)(InstanceT*)
 >
-class c_api_wrapper_owner_class : public c_api_wrapper_handle_class<c_api_wrapper_view_class<InstanceT>, InstanceT, DestroyFn> //<ViewT, InstanceT, DestroyFn>
+class c_api_wrapper_owner_class : public c_api_wrapper_handle_class<ViewT, InstanceT, DestroyFn>
 {
-    using Base = c_api_wrapper_handle_class<c_api_wrapper_view_class<InstanceT>, InstanceT, DestroyFn>;
+    using Base = c_api_wrapper_handle_class<ViewT, InstanceT, DestroyFn>;
 
 public:
     c_api_wrapper_owner_class()
@@ -117,7 +121,7 @@ public:
     }
 };
 
-} // extern "C++"
+//} // extern "C++"
 #endif // __cplusplus
 
 #endif // C_API_WRAPPER_TEMPLATES_H
